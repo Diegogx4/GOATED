@@ -1,0 +1,54 @@
+
+
+Credential harvesting consists of techniques for accessing, identifying, and stealing user account names and/or passwords. Credential harvesting uses multiple ways to obtain sensitive material including the classic email phishing, which typically offers links to false websites or malicious attachments. Attackers often utilize different social engineering techniques, digital scamming, and malware to steal credentials. Specific Tactics, Techniques, and Procedures (TTP) that are often utilized during credential harvesting campaigns are discussed, followed by a detailed review of analysis, detection, and defense strategies that can be employed by a Cyber Defense Analyst (CDA). Finally, trainees are tasked to use their newly-gained knowledge to employ a Group Policy Object (GPO) on the domain. 
+
+Introduction to Credential Harvesting
+
+
+Credentials are used to access devices and systems on a given network. Credentials include user account names and passwords. According to MITRE ATT&CK Tactic Credential Access (TA0006), harvesting credentials consists of techniques for accessing, identifying, and stealing user account names and/or passwords. Techniques used to obtain credentials include keylogging, Man-in-the-Middle (MITM) attacks, phishing, and credential dumping. Specific techniques are detailed later in this lesson. The use of legitimate credentials gives adversaries access to systems, making them harder to detect, and provides the opportunity to create more accounts to help achieve their goals. 
+
+Credential harvesting is a tactic in the Enterprise Framework from MITRE ATT&CK, as shown in Figure 6.1-1:
+
+Credential harvesting is also included in the reconnaissance phase of the MITRE ATT&CK Framework. According to MITRE ATT&CK, "the reconnaissance phase consists of techniques used and data that adversaries gather that can be leveraged to aid or help coordinate future campaigns or attacks, which likely occur later within the MITRE ATT&CK Framework. The data collected during the reconnaissance phase can be collected in an active or passive manner and information may include data points related to target systems, users, architecture, devices, or infrastructure."
+﻿
+Active data collection occurs when the adversary has infiltrated the target network in an attempt to identify and leverage any vulnerabilities and collect information available. Comparatively, passive data collection is not as infiltrated in the target network. Passive data collection occurs when the adversary is not actively manipulating or searching on the target network, rather, the adversary may be listening or watching traffic.
+
+Credential Harvesting Techniques 
+Brute Force Attacks and Credential Harvesting
+﻿
+Credential harvesting is categorized under the MITRE ATT&CK technique for brute force attacks (T1110). Brute force attacks include techniques that can be used when the password portion of credential information is not known. Brute force includes the following sub-techniques:
+
+Additional Credential Harvesting Techniques
+
+Multiple credential harvesting techniques exist that do not fall under the brute force attack techniques. Below are the techniques:
+
+Defenses Against Credential Harvesting
+The primary defense against credential harvesting is strong password management. Enforcing all password settings ensures that passwords are complex, changed frequently, and require two-factor authentication. Below are three strategies that should be implemented to prevent credential harvesting:
+
+Harvesting Credentials by Password Spraying | Part 1
+﻿
+
+﻿
+
+Walk through the MITRE ATT&CK technique of password spraying, as seen from an adversarial perspective. A small dump of credentials was obtained through a successful phishing attack. Using the information from the dump, a small password spraying attack is conducted in an attempt to access the network. 
+
+2. Right-click the Windows icon, and select Run. In the Open: textbox, enter PowerShell, and select OK:
+
+3. Navigate to and access the Sample-Dump.txt file using the following cmdlet:
+
+PS C:\Users\trainee.vcch> Get-Content C:\Users\trainee.vcch\Sample-Dump.txt
+﻿
+
+The output from the cmdlet returns eight passwords and six usernames.
+
+Which file path leads to the domain's GPOs?
+Forest: vcch.lan > Domains > vcch.lan > Group Policy Objects
+
+
+
+
+
+
+
+
+
